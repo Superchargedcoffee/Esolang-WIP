@@ -7,21 +7,53 @@ std::vector<std::string> split(std::string sentence)
 {
 	std::vector<std::string> words{};
 	std::string word{};
-	for (std::string::iterator it = sentence.begin(); it != ++sentence.end(); ++it)
+	bool quoted = false, escape = false, comment = false;
+	for (std::string::iterator it = sentence.begin(); it != sentence.end(); ++it)
 	{
-		if (*it == '\t' || *it == ' ' || it == sentence.end())
+		if (escape)
+		{
+			word.push_back(*it);
+			escape = false;
+		}
+		else if (*it == '\"')
+		{
+			quoted = !quoted;
+			word.push_back(*it);
+			comment = false;
+		}
+		else if (*it == '\\')
+		{
+			escape = true;
+			comment = false;
+		}
+		else if (quoted)
+		{
+			word.push_back(*it);
+		}
+		else if (*it == '/')
+		{
+			if (comment)
+			{
+				return words;
+			}
+			comment = true;
+		}
+		else if (*it == '\t' || *it == ' ')
 		{
 			if (word.size())
 			{
 				words.push_back(word);
 				word = "";
 			}
+			comment = false;
 		}
 		else
 		{
 			word.push_back(*it);
+			comment = false;
 		}
 	}
+	if (word.size()) words.push_back(word);
 	return words;
 }
 

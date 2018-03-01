@@ -1,8 +1,0 @@
-func 1 prime?
-let arg end
-arg 2 % 0 = if arg 2 =
-else 3 : : * arg > if ! 1 4 0 jump end
-: arg $ % if 2 + 2 2 jump else ! 0 end end
-end
-in : 2 > if : 1 - 6 1 jump end
-size if : prime? if prn 10 prc else ! end 7 0 jump end

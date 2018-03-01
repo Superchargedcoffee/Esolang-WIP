@@ -19,11 +19,11 @@ std::unordered_map<std::string, int> var_values{};
 // Functions. Functions are executed as their own program on a separate stack.
 std::unordered_map<std::string, std::pair<int, std::vector<std::vector<std::string>>>> functions{};
 
-// Binary operations.
+// Binary operations: tow inputs, one output.
 const std::vector<std::string> bin_ops = {"+", "-", "*", "/", "%", "=", ">", "<", "<=", ">=", "!=", "^", "max", "min"};
 
-// Unary operations. ! and : have to be handled outside the unary_op function.
-const std::vector<std::string> unary_ops = {"|", "~", "!", ":"};
+// Unary operations: one input, one output.
+const std::vector<std::string> unary_ops = {"|", "~"};
 
 int bin_op(std::string op, int a, int b)
 {
@@ -34,12 +34,15 @@ int bin_op(std::string op, int a, int b)
 			case '+': return a + b;
 			case '-': return a - b;
 			case '*': return a * b;
-			case '/': return a / b;
 			case '%': return a % b;
 			case '>': return a > b;
 			case '<': return a < b;
 			case '^': return exp(a, b);
 			case '=': return a == b;
+			case '/': 
+				if (b) return a / b;
+				ERR = 5;
+				return a;
 		}
 	}
 	else if (op == "<=")
@@ -87,24 +90,27 @@ void incr_IP(std::vector<std::vector<std::string>> commands, std::vector<int>& I
 	}
 }
 
-// Forward declaration of eval allows us to use it to parse functions.
+// Forward declaration of eval allows us to use it to interpret functions.
 void eval(std::vector<std::vector<std::string>> code, std::vector<int>& stack);
 
 // Evaluate the result of a single word.
-void parse(std::vector<int>& stack, std::vector<std::vector<std::string>> commands, std::vector<int>& IP, std::string word)
+void interpret(std::vector<int>& stack, std::vector<std::vector<std::string>> commands, std::vector<int>& IP, std::string word)
 {
 	if (verbose) std::cout << "Parsing " << word << " with IP " << IP[0] << ", " << IP[1] << std::endl;
 	if (is_numerical(word))
 	{
 		stack.push_back(std::stoi(word, nullptr, 10));
 	}
+	else if (word.front() == '\"' && word.back() == '\"')
+	{
+		for (std::string::reverse_iterator it = ++word.rbegin(); it != --word.rend(); ++it)
+		{
+			stack.push_back((int) *it);
+		}
+	}
 	else if (is_elem(word, bin_ops))
 	{
-		if (stack.size() < 2)
-		{
-			ERR = 2;
-			return;
-		}
+		if (stack.size() < 2) goto sizeERR;
 		int a, b;
 		b = stack.back();
 		stack.pop_back();
@@ -114,37 +120,27 @@ void parse(std::vector<int>& stack, std::vector<std::vector<std::string>> comman
 	}
 	else if (is_elem(word, unary_ops))
 	{
-		if (stack.size() < 1)
-		{
-			ERR = 2;
-			return;
-		}
+		if (stack.size() < 1) goto sizeERR;
 		int a = stack.back();
 		stack.pop_back();
-		if (word == ":")
-		{
-			stack.push_back(a);
-			stack.push_back(a);
-		}
-		else if (word != "!")
-		{
-			stack.push_back(unary_op(word, a));
-		}
+		stack.push_back(unary_op(word, a));
+	}
+	else if (word == ":")
+	{
+		if (stack.size() < 1) goto sizeERR;
+		stack.push_back(stack.back());
+	}
+	else if (word == "!")
+	{
+		if (stack.size() < 1) goto sizeERR;
+		stack.pop_back();
 	}
 	else if (word == "sum")
 	{
-		if (stack.size() < 1)
-		{
-			ERR = 2;
-			return;
-		}
+		if (stack.size() < 1) goto sizeERR;
 		int sum = 0, count = stack.back();
 		stack.pop_back();
-		if (stack.size() < count)
-		{
-			ERR = 2;
-			return;
-		}
+		if (stack.size() < count) goto sizeERR;
 		while (count)
 		{
 			sum += stack.back();
@@ -155,18 +151,10 @@ void parse(std::vector<int>& stack, std::vector<std::vector<std::string>> comman
 	}
 	else if (word == "prod")
 	{
-		if (stack.size() < 1)
-		{
-			ERR = 2;
-			return;
-		}
+		if (stack.size() < 1) goto sizeERR;
 		int prod = 1, count = stack.back();
 		stack.pop_back();
-		if (stack.size() < count)
-		{
-			ERR = 2;
-			return;
-		}
+		if (stack.size() < count) goto sizeERR;
 		while (count)
 		{
 			prod *= stack.back();
@@ -181,11 +169,7 @@ void parse(std::vector<int>& stack, std::vector<std::vector<std::string>> comman
 	}
 	else if (word == "jump")
 	{
-		if (stack.size() < 2)
-		{
-			ERR = 2;
-			return;
-		}
+		if (stack.size() < 2) goto sizeERR;
 		int a = stack.back(), b;
 		stack.pop_back();
 		b = stack.back();
@@ -200,39 +184,38 @@ void parse(std::vector<int>& stack, std::vector<std::vector<std::string>> comman
 	}
 	else if (word == "prn")
 	{
-		if (stack.size() < 1)
-		{
-			ERR = 2;
-			return;
-		}
+		if (stack.size() < 1) goto sizeERR;
 		int a = stack.back();
 		stack.pop_back();
 		std::cout << a;
 	}
 	else if (word == "prc")
 	{
-		if (stack.size() < 1)
-		{
-			ERR = 2;
-			return;
-		}
+		if (stack.size() < 1) goto sizeERR;
 		int a = stack.back();
 		stack.pop_back();
 		std::cout << char(a);
 	}
+	else if (word == "prw")
+	{
+		while (stack.back() < 127 && stack.back() > 31 && stack.size())
+		{
+			std::cout << (char) stack.back();
+			stack.pop_back();
+		}
+	}
 	else if (word == "in")
 	{
-		int a;
+		std::string a;
 		std::cin >> a;
-		stack.push_back(a);
+		if (is_numerical(a))
+		{
+			stack.push_back(std::stoi(a, nullptr, 10));
+		}
 	}
 	else if (word == "if")
 	{
-		if (stack.size() < 1)
-		{
-			ERR = 2;
-			return;
-		}
+		if (stack.size() < 1) goto sizeERR;
 		int a = stack.back();
 		stack.pop_back();
 		if (a == 0)
@@ -304,29 +287,17 @@ void parse(std::vector<int>& stack, std::vector<std::vector<std::string>> comman
 	}
 	else if (word == "get")
 	{
-		if (stack.size() < 1)
-		{
-			ERR = 2;
-			return;
-		}
+		if (stack.size() < 1) goto sizeERR;
 		int a = stack.back();
 		stack.pop_back();
-		if (stack.size() < a)
-		{
-			ERR = 2;
-			return;
-		}
+		if (stack.size() < a) goto sizeERR;
 		int b = stack[a];
 		stack.erase(stack.begin() + a);
 		stack.push_back(b);
 	}
 	else if (word == "$")
 	{
-		if (stack.size() < 2)
-		{
-			ERR = 2;
-			return;
-		}
+		if (stack.size() < 2) goto sizeERR;
 		int a = stack.back(), b;
 		stack.pop_back();
 		b = stack.back();
@@ -337,11 +308,7 @@ void parse(std::vector<int>& stack, std::vector<std::vector<std::string>> comman
 	else if (functions.count(word))
 	{
 		int arg_c = functions[word].first;
-		if (arg_c > stack.size())
-		{
-			ERR = 2;
-			return;
-		}
+		if (arg_c > stack.size()) goto sizeERR;
 		std::vector<int> func_stack{};
 		while (arg_c)
 		{
@@ -364,6 +331,10 @@ void parse(std::vector<int>& stack, std::vector<std::vector<std::string>> comman
 		std::cout << "Stack is now ";
 		vector_print(stack);
 	}
+	return;
+// Stack size error:
+sizeERR:
+	ERR = 2;
 	return;
 }
 
@@ -465,7 +436,7 @@ void eval(std::vector<std::vector<std::string>> code, std::vector<int>& stack)
 				// Execute code in assignment body on the MAIN stack, util an 'end' not bound to an 'if' is encountered.
 				while (loop_depth)
 				{
-					parse(stack, code, IP, code[IP[0]][IP[1]]);
+					interpret(stack, code, IP, code[IP[0]][IP[1]]);
 					if (code[IP[0]][IP[1]] == "if")
 					{
 						++loop_depth;
@@ -505,7 +476,7 @@ void eval(std::vector<std::vector<std::string>> code, std::vector<int>& stack)
 		}
 		else
 		{
-			parse(stack, code, IP, code[IP[0]][IP[1]]);
+			interpret(stack, code, IP, code[IP[0]][IP[1]]);
 		}
 		incr_IP(code, IP);
 	}
@@ -528,6 +499,8 @@ void eval(std::vector<std::vector<std::string>> code, std::vector<int>& stack)
 			case 3: std::cout << "Incomplete if/else statement.\n";
 				break;
 			case 4: std::cout << "Improper function definition.\n";
+				break;
+			case 5: std::cout << "Division by zero.\n";
 				break;
 			default: std::cout << "Unknown error signal.\n";
 		}
@@ -589,9 +562,9 @@ int main(int argc, char* argv[])
 	return 0;
 
 /*  Usage:
- *  RPN file filename
+ *  RPN file filename options
  *  OR
- *  RPN string 'code to execute'
+ *  RPN string 'code to execute' options
  */
 usage:
 	std::cout << "Usage: " << argv[0] << " [file / string] [filename / code string]\n";
