@@ -9,6 +9,12 @@ RPN_util.cpp and RPN_util.h contain basic utility functions.
 
 RPN_example is an example program, which prompts the user to input a number, and listing all primes below the input.
 
+Literals:
+
+  String literals start with double quotes and end with either double quotes or a new line, and may not span more than one line. Characters can be escaped, but note that \n, \t, etc. will just result in n, t, or so on.
+  
+  Number literals are strings of digits. Only integers are currently supported, so they may not contain decimals.
+
 Operations:
 
   2 to 1 Operations:
@@ -44,6 +50,8 @@ Operations:
     prn  : Pop the top of the stack, and print it as a number
     
     prc  : Pop the top of the stack, and print it as a character
+    
+    prw  : Print the top of the stack as a char and pop while the top of the stack is printable ascii (31 < x < 127)
     
     in   : Get a number from cin and push it to the stack (no prompt is given to the user)
     
