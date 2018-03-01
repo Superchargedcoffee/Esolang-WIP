@@ -1,0 +1,9 @@
+func 1 prime?
+let arg end 				// Store function argument in a variable
+arg 2 % 0 = if arg 2 =			// If arg % 2 == 0, return arg == 2
+else 3 : : * arg > if ! 1 4 0 jump end  // For numbers <= sqrt(arg)
+: arg $ % if 2 + 2 2 jump else ! 0 end  // If not divisible, increment divisor and jump back to begining of loop. Else return 0
+end end					// End if and function
+in : 2 > if : 1 - 6 1 jump end		// Fill stack with numbers <= user input
+size if : prime? if prn 10 prc		// While stack is non-empty, print if prime
+else ! end 7 0 jump end			// Otherwise, skip. Jump back to start of loop.
