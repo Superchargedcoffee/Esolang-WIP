@@ -55,19 +55,19 @@ Operations:
     
 Assignments:
   
-  def  : Macro defintion. Must be on its own line, and of the form
+    def  : Macro defintion. Must be on its own line, and of the form
             
             def macro_name one or more operations
          
          macro_name will be replaced with the operations given everywhere in the code. Note that this will affect jumps.
   
-  let  : Variable assignment. May be anywhere, but must be of the form
+    let  : Variable assignment. May be anywhere, but must be of the form
             
             let variable_name zero or more operations end
          
          The zero or more operations are performed on the stack, then variable_name is assigned the value of the top of the stack, popping it.
   
-  func : Function definition. Must be of the form
+    func : Function definition. Must be of the form
          
              func arg_count func_name operations end
          
