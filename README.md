@@ -9,6 +9,10 @@ RPN_util.cpp and RPN_util.h contain basic utility functions.
 
 RPN_example files are example programs.
 
+Comments:
+
+  Comments being with // and extend to the end of the line. There must be a space between // and the previous word.
+
 Literals:
 
   String literals start with double quotes and end with either double quotes or a new line, and may not span more than one line. Characters can be escaped, but note that \n, \t, etc. will just result in n, t, or so on.
