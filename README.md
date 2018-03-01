@@ -7,7 +7,7 @@ RPN.cpp contains all the interesting stuff.
 
 RPN_util.cpp and RPN_util.h contain basic utility functions.
 
-RPN_example is an example program, which prompts the user to input a number, and listing all primes below the input.
+RPN_example files are example programs.
 
 Literals:
 
